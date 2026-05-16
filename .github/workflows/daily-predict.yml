@@ -1,0 +1,66 @@
+# .github/workflows/daily-predict.yml
+name: 🎯 Daily AI Prediction
+
+# 実行トリガー
+on:
+  # 毎日朝6時（JST）に実行
+  schedule:
+    - cron: '0 21 * * *'  # UTC 21:00 = JST 06:00
+  
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ステップ1: リポジトリをチェックアウト
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      
+      # ステップ2: Python をセットアップ
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      # ステップ3: Python 依存関係をインストール
+      - name: 📦 Install ml_engine dependencies
+        run: |
+          cd ml_engine
+          pip install -r requirements.txt
+      
+      # ステップ4: LightGBM モデルを学習（初回のみ実行）
+      - name: 🤖 Train LightGBM model
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd ml_engine
+          python train_lgbm.py || echo "Training skipped or failed, continuing..."
+      
+      # ステップ5: LightGBM 推論を実行
+      - name: 🔮 Run LightGBM prediction
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd ml_engine
+          python predict_lgbm.py
+      
+      # ステップ6: Gemini 推論を実行
+      - name: 🎨 Run Gemini prediction
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd ml_engine
+          python predict_gemini.py
+      
+      # ステップ7: 実行結果をログ出力
+      - name: ✅ Log completion
+        run: |
+          echo "🎉 Prediction completed at $(date)"
