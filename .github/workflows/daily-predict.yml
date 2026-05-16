@@ -9,7 +9,6 @@ on:
 jobs:
   predict:
     runs-on: ubuntu-latest
-    
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
@@ -18,42 +17,31 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-          # ❌ cache オプションを削除（これが原因）
       
-      - name: 📦 Install ml_engine dependencies
-        run: |
-          cd ml_engine
-          pip install --upgrade pip
-          pip install -r requirements.txt
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      - name: 📦 Install dependencies
+        run: pip install -r ml_engine/requirements.txt
       
       - name: 🤖 Train LightGBM model
-        run: |
-          cd ml_engine
-          python train_lgbm.py || echo "Training skipped"
+        working-directory: ml_engine
+        run: python train_lgbm.py || true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
       - name: 🔮 Run LightGBM prediction
-        run: |
-          cd ml_engine
-          python predict_lgbm.py
+        working-directory: ml_engine
+        run: python predict_lgbm.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
       - name: 🎨 Run Gemini prediction
-        run: |
-          cd ml_engine
-          python predict_gemini.py
+        working-directory: ml_engine
+        run: python predict_gemini.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       
-      - name: ✅ Log completion
-        run: |
-          echo "🎉 Prediction completed at $(date)"
+      - name: ✅ Prediction completed
+        run: echo "🎉 All predictions done at $(date)"
