@@ -9,39 +9,29 @@ on:
 jobs:
   predict:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       
-      - name: 📦 Install dependencies
-        run: pip install -r ml_engine/requirements.txt
+      # この行が動く前提：ml_engine/requirements.txt が GitHub に含まれている
+      - run: pip install -r ml_engine/requirements.txt
       
-      - name: 🤖 Train LightGBM model
-        working-directory: ml_engine
-        run: python train_lgbm.py || true
+      - run: cd ml_engine && python train_lgbm.py || true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
-      - name: 🔮 Run LightGBM prediction
-        working-directory: ml_engine
-        run: python predict_lgbm.py
+      - run: cd ml_engine && python predict_lgbm.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
-      - name: 🎨 Run Gemini prediction
-        working-directory: ml_engine
-        run: python predict_gemini.py
+      - run: cd ml_engine && python predict_gemini.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      
-      - name: ✅ Prediction completed
-        run: echo "🎉 All predictions done at $(date)"
