@@ -1,4 +1,3 @@
-```react
 import { supabase } from '@/lib/supabaseClient';
 import PredictionTable from '@/components/PredictionTable';
 import ModelCompare from '@/components/ModelCompare';
@@ -6,7 +5,15 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { race_id?: string } }) {
+// Next.js 15/16 の仕様に対応した型定義
+type Props = {
+  searchParams: Promise<{ race_id?: string }>;
+};
+
+export default async function Home(props: Props) {
+  // 非同期でsearchParamsを展開（最新仕様）
+  const params = await props.searchParams;
+
   // 1. 保存されている予測データからユニークなレースIDを取得
   const { data: allPredictions } = await supabase
     .from('predictions')
@@ -17,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: { race_id?:
   const uniqueRaceIds = Array.from(new Set(allPredictions?.map(p => p.race_id) || []));
   
   // URLパラメータで指定されたレースID、なければ最新のレースIDを使用
-  const currentRaceId = searchParams.race_id || uniqueRaceIds[0] || '';
+  const currentRaceId = params.race_id || uniqueRaceIds[0] || '';
 
   // 2. 選択されたレースの予測データを取得
   const { data: predictions, error } = await supabase
@@ -45,7 +52,6 @@ export default async function Home({ searchParams }: { searchParams: { race_id?:
             uniqueRaceIds.map((id) => (
               <Link 
                 key={id} 
-                // エラーの原因だったバッククォートを、安全な文字列結合(+)に修正
                 href={"/?race_id=" + id}
                 className={
                   "px-4 py-2 rounded-md text-sm font-bold transition-colors " + 
@@ -54,7 +60,6 @@ export default async function Home({ searchParams }: { searchParams: { race_id?:
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200')
                 }
               >
-                {/* 11~12文字目がレース番号 */}
                 {id.slice(10, 12)}R ({id})
               </Link>
             ))
@@ -78,6 +83,3 @@ export default async function Home({ searchParams }: { searchParams: { race_id?:
     </main>
   );
 }
-
-
-```
