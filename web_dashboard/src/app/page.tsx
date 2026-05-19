@@ -45,12 +45,14 @@ export default async function Home({ searchParams }: { searchParams: { race_id?:
             uniqueRaceIds.map((id) => (
               <Link 
                 key={id} 
-                href={`/?race_id=${id}`}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${
-                  currentRaceId === id 
+                // エラーの原因だったバッククォートを、安全な文字列結合(+)に修正
+                href={"/?race_id=" + id}
+                className={
+                  "px-4 py-2 rounded-md text-sm font-bold transition-colors " + 
+                  (currentRaceId === id 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200')
+                }
               >
                 {/* 11~12文字目がレース番号 */}
                 {id.slice(10, 12)}R ({id})
@@ -76,5 +78,6 @@ export default async function Home({ searchParams }: { searchParams: { race_id?:
     </main>
   );
 }
+
 
 ```
